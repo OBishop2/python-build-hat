@@ -28,6 +28,24 @@ class PassiveMotor(Device):
         self._currentspeed = 0
         self.plimit(0.7)
 
+    def run_power(self, speed=None):
+        self._wait_for_nonblocking()
+        if self._runmode == MotorRunmode.PWM:
+            if self._currentspeed == speed:
+                # Already running at this speed, do nothing
+                return
+        elif self._runmode != MotorRunmode.NONE:
+            return
+        if speed is None:
+            speed = self.default_speed
+        elif not (speed >= -100 and speed <= 100):
+            raise MotorError("Invalid Speed")
+        speed = speed / 100
+        cmd = f"port {self.port}; pwm; set {speed}\r"
+        self._runmode = MotorRunmode.PWM
+        self._currentspeed = speed
+        self._write(cmd)
+
     def set_default_speed(self, default_speed):
         """Set the default speed of the motor
 
